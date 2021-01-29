@@ -2763,6 +2763,10 @@ static void hermon_reset ( struct hermon *hermon ) {
 	static const uint8_t backup_exclude[] =
 		PCI_CONFIG_BACKUP_EXCLUDE ( 0x58, 0x5c );
 
+	//
+	DBGC ( hermon, "Hermon %p trying reset %08lx\n",
+	       hermon, HERMON_RESET_MAGIC );
+
 	/* Perform device reset and preserve PCI configuration */
 	pci_backup ( pci, &backup, backup_exclude );
 	writel ( HERMON_RESET_MAGIC,
@@ -3995,6 +3999,16 @@ static int hermon_probe ( struct pci_device *pci ) {
 	/* Leave device quiescent until opened */
 	if ( hermon->open_count == 0 )
 		hermon_stop ( hermon );
+
+	//
+	assert ( hermon->open_count == 0 );
+	DBGC ( hermon, "Hermon %p restart\n", hermon );
+	rc = hermon_start ( hermon, 0 );
+	DBGC ( hermon, "Hermon %p restop\n", hermon );
+	hermon_stop ( hermon );
+	DBGC ( hermon, "Hermon %p reset %08lx %s\n",
+	       hermon, HERMON_RESET_MAGIC,
+	       ( ( rc == 0 ) ? "works" : "fails" ) );
 
 	return 0;
 
